@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  daftra:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: daftra
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+      - /var/www/html/vendor
+    ports:
+      - "8032:80"
+    depends_on:
+      - mysql-db
+      - redis-cache
+    environment:
+      - REDIS_HOST=redis-cache
+      - REDIS_PORT=6379
+
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: daftra
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3332:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql-db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "8033:80"
+    depends_on:
+      - mysql-db
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
