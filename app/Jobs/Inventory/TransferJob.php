@@ -16,8 +16,7 @@ class TransferJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
-    public int $maxExceptions = 1;
-    public int $timeout = 300; // 5 minutes
+    public int $timeout = 300;
 
     public function __construct(private readonly array $data) {}
 
@@ -31,7 +30,6 @@ class TransferJob implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        // Log failure and notify admin
         Log::error('Transfer job failed: ' . $exception->getMessage(), [
             'data' => $this->data,
             'exception' => $exception

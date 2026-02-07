@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 class TransferService
 {
     protected StockService $stockService;
-    private const BULK_THRESHOLD = 50;
+    private const LOW_STOCK_LIMIT = 50;
 
     public function __construct(StockService $stockService) {
         $this->stockService = $stockService;
@@ -35,7 +35,7 @@ class TransferService
             $itemId = $line['item_id'];
             $normalized[$itemId] = $line['quantity'];
         }
-        ksort($normalized);
+
         return $normalized;
     }
 
@@ -75,7 +75,6 @@ class TransferService
             $fromWarehouse = $data['from_warehouse_id'];
 
             $warehousesToLock = [$fromWarehouse, $toWarehouse];
-            sort($warehousesToLock);
 
             $stocks = [];
             foreach ($warehousesToLock as $warehouseId) {
@@ -109,7 +108,6 @@ class TransferService
                 $newFromQuantity = $availableQuantity - $neededQuantity;
                 $newToQuantity = $toItemQuantity + $neededQuantity;
 
-                // Prepare updates for both warehouses
                 $itemsToUpdateOrCreate[] = [
                     'warehouse_id' => $toWarehouse,
                     'inventory_item_id' => $itemId,
@@ -126,7 +124,7 @@ class TransferService
                     'updated_at' => $now,
                 ];
 
-                if ($newFromQuantity < self::BULK_THRESHOLD) {
+                if ($newFromQuantity < self::LOW_STOCK_LIMIT) {
                     $lowStockDetected[] = [
                         'item_id' => $itemId,
                         'warehouse_id' => $fromWarehouse,
